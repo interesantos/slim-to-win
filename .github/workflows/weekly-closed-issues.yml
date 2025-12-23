@@ -72,6 +72,7 @@ jobs:
           Period: ${{ fromJSON(steps.get_issues.outputs.result).period }}
                     
           Closed Features:
+          
           ${{ fromJSON(steps.get_issues.outputs.result).list }}
           
           ---
