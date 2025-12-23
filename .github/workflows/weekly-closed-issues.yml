@@ -68,10 +68,12 @@ jobs:
           cat << 'EOF' > email_body.txt
           
           Total Features Closed: ${{ fromJSON(steps.get_issues.outputs.result).total }}
+          
           Period: ${{ fromJSON(steps.get_issues.outputs.result).period }}
                     
           Closed Features:
           ${{ fromJSON(steps.get_issues.outputs.result).list }}
+          
           ---
           EOF
       - name: Send email via Brevo SMTP
@@ -83,7 +85,7 @@ jobs:
           EMAIL_CC: ${{ secrets.EMAIL_CC }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y ssmtp
+          sudo apt-get install -y mailutils ssmtp
           
           # Configure SSMTP
           sudo tee /etc/ssmtp/ssmtp.conf > /dev/null << EOF
@@ -96,12 +98,12 @@ jobs:
           FromLineOverride=YES
           EOF
           
-          # Send email with CC
-          {
-            echo "From: $EMAIL_FROM"
-            echo "To: $EMAIL_TO"
-            echo "Cc: $EMAIL_CC"
-            echo "Subject: Weekly Closed Features Report"
-            echo ""
-            cat email_body.txt
-          } | ssmtp "$EMAIL_TO,$EMAIL_CC"
+          # Send first email
+          cat email_body.txt | mail -s "Weekly Closed Features Report" \
+            -a "From: $EMAIL_FROM" \
+            $EMAIL_TO
+          
+          # Send second email
+          cat email_body.txt | mail -s "Weekly Closed Features Report" \
+            -a "From: $EMAIL_FROM" \
+            $EMAIL_CC
