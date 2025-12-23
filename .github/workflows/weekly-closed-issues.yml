@@ -38,17 +38,25 @@ jobs:
             const totalClosed = closedIssues.length;
             
             let issuesList = closedIssues.map(issue => 
-              `- #${issue.number}: ${issue.title} (closed by @${issue.closed_by?.login || 'unknown'})`
+              `- #${issue.number}: ${issue.title}`
             ).join('\n');
             
             if (totalClosed === 0) {
               issuesList = 'No issues were closed this week.';
             }
             
+            // Format dates as "26 Oct 2025"
+            const formatDate = (date) => {
+              const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+              const d = new Date(date);
+              return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+            };
+            
             const report = {
               total: totalClosed,
               list: issuesList,
-              period: `${oneWeekAgo.toISOString().split('T')[0]} to ${new Date().toISOString().split('T')[0]}`
+              period: `${formatDate(oneWeekAgo)} - ${formatDate(new Date())}`
             };
             
             return report;
@@ -57,17 +65,14 @@ jobs:
         id: email_body
         run: |
           cat << 'EOF' > email_body.txt
-          Subject: Weekly Closed Issues Report - ${{ github.repository }}
-          
-          Repository: ${{ github.repository }}
+          Subject: Weekly Closed Features Report - ${{ github.event.repository.name }}
+
+          Total Features Closed: ${{ fromJSON(steps.get_issues.outputs.result).total }}
           Period: ${{ fromJSON(steps.get_issues.outputs.result).period }}
-          Total Issues Closed: ${{ fromJSON(steps.get_issues.outputs.result).total }}
           
-          Closed Issues:
+          Closed Features:
           ${{ fromJSON(steps.get_issues.outputs.result).list }}
           
-          ---
-          View all issues: https://github.com/${{ github.repository }}/issues?q=is:issue+is:closed
           EOF
 
       - name: Send email via Brevo SMTP
@@ -92,6 +97,6 @@ jobs:
           EOF
           
           # Send email
-          cat email_body.txt | mail -s "Weekly Closed Issues Report - ${{ github.repository }}" \
+          cat email_body.txt | mail -s "Weekly Closed Issues Report - ${{ github.event.repository.name }}" \
             -a "From: $EMAIL_FROM" \
             $EMAIL_TO
