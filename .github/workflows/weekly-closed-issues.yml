@@ -35,10 +35,15 @@ jobs:
               new Date(issue.closed_at) >= oneWeekAgo
             );
             
+            // Sort by closed_at date (oldest first, newest last)
+            closedIssues.sort((a, b) => 
+              new Date(a.closed_at) - new Date(b.closed_at)
+            );
+            
             const totalClosed = closedIssues.length;
             
             let issuesList = closedIssues.map(issue => 
-              `- #${issue.number}: ${issue.title}`
+              `- ${issue.title}`
             ).join('\n');
             
             if (totalClosed === 0) {
@@ -65,14 +70,15 @@ jobs:
         id: email_body
         run: |
           cat << 'EOF' > email_body.txt
-          Subject: Weekly Closed Features Report - ${{ github.event.repository.name }}
-
-          Total Features Closed: ${{ fromJSON(steps.get_issues.outputs.result).total }}
+          Subject: Weekly Closed Issues Report
+          
+          Repository: ${{ github.event.repository.name }}
           Period: ${{ fromJSON(steps.get_issues.outputs.result).period }}
+          Total Issues Closed: ${{ fromJSON(steps.get_issues.outputs.result).total }}
           
-          Closed Features:
+          Closed Issues:
           ${{ fromJSON(steps.get_issues.outputs.result).list }}
-          
+
           EOF
 
       - name: Send email via Brevo SMTP
