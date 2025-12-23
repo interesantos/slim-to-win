@@ -67,10 +67,10 @@ jobs:
         run: |
           cat << 'EOF' > email_body.txt
           
-          Period: ${{ fromJSON(steps.get_issues.outputs.result).period }}
-          
           Total Features Closed: ${{ fromJSON(steps.get_issues.outputs.result).total }}
-          
+
+          Period: ${{ fromJSON(steps.get_issues.outputs.result).period }}
+                    
           Closed Features:
           ${{ fromJSON(steps.get_issues.outputs.result).list }}
 
